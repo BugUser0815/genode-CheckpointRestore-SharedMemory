@@ -568,7 +568,7 @@ Genode::Child_policy::Route Target_child::resolve_session_request(Genode::Servic
 	Genode::log("Resolve session request ",name," ",label);
 	//if(name=="ROM"&&(label=="sheep_counter"||label=="ld.lib.so"))
 	//{
-		return Route { find_service(_parent_services,name), label, Genode::Session::Diag{false}};
+		//return Route { find_service(_parent_services,name), label, Genode::Session::Diag{false}};
 	//}
 	return Route { *_custom_services.find(name.string()), label, Genode::Session::Diag{false} };
 	Genode::log("Could not find ",name);

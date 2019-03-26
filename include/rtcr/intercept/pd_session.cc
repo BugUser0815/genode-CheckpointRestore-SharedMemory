@@ -9,35 +9,47 @@
 using namespace Rtcr;
 
 
-Pd_session_component::Pd_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-		const char *label, const char *creation_args, bool &bootstrap_phase, Resources resources, Diag diag)
+Pd_session_component::Pd_session_component(Genode::Rpc_entrypoint   &ep,
+		                     Genode::Session::Resources         resources,
+		                     Genode::Session::Label      const &label,
+		                     Genode::Session::Diag              diag,
+		                     Genode::Range_allocator  &phys_alloc,
+		                     Genode::Region_map       &local_rm,
+		                     char const       *args,
+		                     Genode::Range_allocator  &core_mem)
 :
 	Session_object(ep, resources, label, diag),
-	_env             (env),
-	_md_alloc        (md_alloc),
-	_ep              (ep),
-	_bootstrap_phase (bootstrap_phase),
-	_parent_pd       (env, label),
-	_parent_state    (creation_args, _bootstrap_phase),
-	_address_space   (_md_alloc, _parent_pd.address_space(), 0, "address_space", _bootstrap_phase),
-	_stack_area      (_md_alloc, _parent_pd.stack_area(),    0, "stack_area", _bootstrap_phase),
-	_linker_area     (_md_alloc, _parent_pd.linker_area(),   0, "linker_area", _bootstrap_phase)
-{
-	//if(verbose_debug) Genode::log("\033[33m", "Pd", "\033[0m (parent ", _parent_pd, ")");
-
-	_ep.manage(_address_space);
-	_ep.manage(_stack_area);
-	_ep.manage(_linker_area);
-}
+	_ep(ep),
+	_parent_pd(_parent),
+	_bootstrap_phase(false),
+	_parent_state ("", _bootstrap_phase),
+			_constrained_md_ram_alloc(*this, _ram_quota_guard(), _cap_quota_guard()),
+			_constrained_core_ram_alloc(_ram_quota_guard(), _cap_quota_guard(), core_mem),
+			_md_alloc(_constrained_md_ram_alloc, local_rm),
+			_signal_broker(_sliced_heap, signal_ep, signal_ep),
+			_ram_ds_factory(ep, phys_alloc, phys_range, local_rm,
+			                _constrained_core_ram_alloc),
+			_rpc_cap_factory(_sliced_heap),
+			_native_pd(*this, args),
+			_address_space(ep, _sliced_heap, pager_ep,
+			               virt_range.start, virt_range.size, diag),
+			_stack_area (ep, _sliced_heap, pager_ep, 0, stack_area_virtual_size(), diag),
+			_linker_area(ep, _sliced_heap, pager_ep, 0, LINKER_AREA_SIZE, diag)
+	{
+		if (platform()->core_needs_platform_pd() || label != "core") {
+			_pd.construct(&_sliced_heap, _label.string());
+			_address_space.address_space(&*_pd);
+		}
+	}
 
 
 Pd_session_component::~Pd_session_component()
 {
 	//if(verbose_debug) Genode::log("\033[33m", "~Pd", "\033[0m ", _parent_pd);
 
-	_ep.dissolve(_linker_area);
+	/*_ep.dissolve(_linker_area);
 	_ep.dissolve(_stack_area);
-	_ep.dissolve(_address_space);
+	_ep.dissolve(_address_space);*/
 }
 
 

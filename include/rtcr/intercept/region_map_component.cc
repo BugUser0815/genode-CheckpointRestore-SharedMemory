@@ -9,14 +9,17 @@
 using namespace Rtcr;
 
 
-Region_map_component::Region_map_component(Genode::Allocator &md_alloc, Genode::Capability<Genode::Region_map> region_map_cap,
-		Genode::size_t size, const char *label, bool &bootstrap_phase)
+Region_map_component::Region_map_component(Genode::Rpc_entrypoint   &ep,
+		                     Genode::Allocator        &md_alloc,
+		                     Genode::addr_t            vm_start,
+		                     Genode::size_t            vm_size,
+		                     Genode::Session::Diag     diag)
 :
-	_md_alloc          (md_alloc),
-	_bootstrap_phase   (bootstrap_phase),
-	_label             (label),
-	_parent_region_map (region_map_cap),
-	_parent_state      (size, _parent_region_map.dataspace(), bootstrap_phase)
+	_diag(diag), _ds_ep(&ep), _thread_ep(&ep), _session_ep(&ep),
+	_md_alloc(md_alloc),
+	_map(&_md_alloc), _pager_ep(&pager_ep),
+	_ds(align_addr(vm_size, get_page_size_log2())),
+	_ds_cap(_type_deduction_helper(_ds_ep->manage(&_ds)))
 {
 	//if(verbose_debug) Genode::log("\033[33m", "Rmap", "\033[0m<\033[35m", _label, "\033[0m>(parent ", _parent_region_map, ")");
 }

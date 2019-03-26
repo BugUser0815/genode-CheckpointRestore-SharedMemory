@@ -60,9 +60,17 @@ private:
 	 */
 	Region_map_info            _parent_state;
 
+	Genode::Allocator_avl_tpl<Genode::Rm_region>  _map;          /* region map for attach,
+	                                                detach, pagefaults */
+	Genode::Rm_dataspace_component        _ds;           /* dataspace representation of region map */
+	Genode::Dataspace_capability          _ds_cap;
+
 public:
-	Region_map_component(Genode::Allocator &md_alloc, Genode::Capability<Genode::Region_map> region_map_cap,
-			Genode::size_t size, const char *label, bool &bootstrap_phase);
+	Region_map_component(Genode::Rpc_entrypoint   &ep,
+		                     Genode::Allocator        &md_alloc,
+		                     Genode::addr_t            vm_start,
+		                     Genode::size_t            vm_size,
+		                     Genode::Session::Diag     diag);
 	~Region_map_component();
 
 	Genode::Capability<Genode::Region_map> parent_cap() { return _parent_region_map; }

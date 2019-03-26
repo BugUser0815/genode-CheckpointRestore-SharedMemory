@@ -41,49 +41,32 @@ private:
 	 */
 	static constexpr bool verbose_debug = pd_verbose_debug;
 
-	/**
-	 * TODO Needed?
-	 */
-	Genode::Env           &_env;
-	/**
-	 * Allocator for list elements which monitor the Signal_source,
-	 * Signal_context and Native_capability creation and destruction
-	 */
-	Genode::Allocator     &_md_alloc;
-	/**
-	 * Entrypoint to manage itself
-	 */
-	Genode::Entrypoint    &_ep;
-	/**
-	 * Reference to Target_child's bootstrap phase
-	 */
-	bool                  &_bootstrap_phase;
-	/**
-	 * Connection to parent's pd session, usually from core
-	 */
-	Genode::Pd_connection  _parent_pd;
-	/**
-	 * State of parent's RPC object
-	 */
-	Pd_session_info        _parent_state;
+	Genode::Pd_connection _parent_pd;
 
-	/**
-	 * Custom address space for monitoring the attachments of the Region map
-	 */
-	Region_map_component   _address_space;
-	/**
-	 * Custom stack area for monitoring the attachments of the Region map
-	 */
-	Region_map_component   _stack_area;
-	/**
-	 * Custom linker area for monitoring the attachments of the Region map
-	 */
-	Region_map_component   _linker_area;
+	Pd_session_info _parent_state;
+
+	bool &_bootstrap_phase;
+
+	Genode::Rpc_entrypoint            &_ep;
+	Genode::Constrained_ram_allocator  _constrained_md_ram_alloc;
+	Genode::Sliced_heap                _md_alloc;
+	Genode::Capability<Genode::Parent>         _parent { };
+
+	Region_map_component _address_space;
+	Region_map_component _stack_area;
+	Region_map_component _linker_area;
 
 
 public:
-	Pd_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-		const char *label, const char *creation_args, bool &bootstrap_phase, Resources resources, Diag diag);
+	Pd_session_component(Genode::Rpc_entrypoint   &ep,
+		                     Genode::Rpc_entrypoint   &signal_ep,
+		                     Genode::Session::Resources         resources,
+		                     Genode::Session::Label      const &label,
+		                     Genode::Session::Diag              diag,
+		                     Genode::Range_allocator  &phys_alloc,
+		                     Genode::Region_map       &local_rm,
+		                     char const       *args,
+		                     Genode::Range_allocator  &core_mem);
 	~Pd_session_component();
 
 	Genode::Pd_session_capability parent_cap() { return _parent_pd.cap(); }
