@@ -60,9 +60,10 @@ private:
 	 */
 	Region_map_info            _parent_state;
 
-	Genode::Allocator_avl_tpl<Genode::Rm_region>  _map;          /* region map for attach,
-	                                                detach, pagefaults */
-	Genode::Rm_dataspace_component        _ds;           /* dataspace representation of region map */
+	Genode::Session::Diag     _diag;
+
+	Genode::Rpc_entrypoint   &_ds_ep;
+
 	Genode::Dataspace_capability          _ds_cap;
 
 public:
